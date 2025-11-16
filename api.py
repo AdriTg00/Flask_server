@@ -2,14 +2,36 @@ from flask import Flask, request, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
-
-# Inicializar Firebase
-cred = credentials.Certificate("clave.json")  # <-- aquí va tu clave JSON de Firebase
-firebase_admin.initialize_app(cred)
-
-db = firestore.client()
+import json
+import os
 
 app = Flask(__name__)
+
+# ========================
+#  Inicializar Firebase
+# ========================
+
+# Leemos la clave directamente desde la variable de entorno
+firebase_key = os.getenv("FIREBASE_KEY")
+
+if not firebase_key:
+    raise Exception("ERROR: No se encontró la variable de entorno FIREBASE_KEY")
+
+# Convertimos el texto del JSON a un diccionario
+cred_dict = json.loads(firebase_key)
+
+# Creamos las credenciales a partir del diccionario
+cred = credentials.Certificate(cred_dict)
+
+# Inicializamos Firebase
+firebase_admin.initialize_app(cred)
+
+# Cliente Firestore
+db = firestore.client()
+
+# ========================
+#       ENDPOINTS
+# ========================
 
 @app.route("/guardar_partida", methods=["POST"])
 def guardar_partida():
@@ -28,5 +50,6 @@ def guardar_partida():
     return jsonify({"status": "ok"}), 200
 
 
+# Render no usa esto, pero sirve para localhost
 if __name__ == "__main__":
     app.run(port=5000)
