@@ -4,9 +4,9 @@ from firebase_admin import credentials, firestore
 from datetime import datetime
 import json
 import os
+from uuid import uuid4
 
 app = Flask(__name__)
-
 
 # ======================================================
 #              🔥 INICIALIZAR FIREBASE 🔥
@@ -30,55 +30,55 @@ db = firestore.client()
 
 @app.route("/jugadores/validar", methods=["POST"])
 def validar_jugador():
-    """Devuelve {existe: True/False}"""
     data = request.json
     nombre = data.get("nombre")
 
     if not nombre:
         return jsonify({"error": "Nombre requerido"}), 400
 
-    doc = db.collection("jugadores").document(nombre).get()
+    query = db.collection("jugadores").where("nombre", "==", nombre).stream()
+    existe = any(query)
 
-    return jsonify({"existe": doc.exists}), 200
+    return jsonify({"existe": existe}), 200
 
 
 @app.route("/jugadores/crear", methods=["POST"])
 def crear_jugador():
-    """Crea un jugador si no existe."""
     data = request.json
     nombre = data.get("nombre")
 
     if not nombre:
         return jsonify({"error": "Nombre requerido"}), 400
 
-    doc_ref = db.collection("jugadores").document(nombre)
-    doc = doc_ref.get()
+    # Generar ID único
+    user_id = uuid4().hex
 
-    if doc.exists:
-        return jsonify({"creado": False, "error": "Jugador ya existe"}), 200
-
-    doc_ref.set({
+    db.collection("jugadores").document(user_id).set({
         "nombre": nombre,
-        "fecha_creacion": datetime.now(),
+        "fecha_creacion": datetime.now()
     })
 
-    return jsonify({"creado": True}), 200
+    return jsonify({
+        "id": user_id,
+        "nombre": nombre
+    }), 200
 
 
 @app.route("/jugadores/obtener", methods=["GET"])
 def obtener_jugador():
-    """Devuelve datos del jugador."""
+    """Devuelve datos del jugador por nombre."""
     nombre = request.args.get("nombre")
 
     if not nombre:
         return jsonify({"error": "Nombre requerido"}), 400
 
-    doc = db.collection("jugadores").document(nombre).get()
+    query = db.collection("jugadores").where("nombre", "==", nombre).stream()
+    for doc in query:
+        data = doc.to_dict()
+        data["id"] = doc.id
+        return jsonify(data), 200
 
-    if not doc.exists:
-        return jsonify({"error": "No existe"}), 404
-
-    return jsonify(doc.to_dict()), 200
+    return jsonify({"error": "No existe"}), 404
 
 
 # ======================================================
@@ -87,7 +87,6 @@ def obtener_jugador():
 
 @app.route("/partidas/guardar", methods=["POST"])
 def guardar_partida():
-    """Guarda una nueva partida."""
     data = request.json
 
     db.collection("partidas").add({
@@ -105,18 +104,15 @@ def guardar_partida():
 
 @app.route("/partidas/obtener", methods=["GET"])
 def obtener_partidas():
-    """Devuelve todas las partidas de un jugador."""
-    jugador = request.args.get("jugador")
+    jugador_id = request.args.get("jugador")
 
-    if not jugador:
+    if not jugador_id:
         return jsonify({"error": "Jugador requerido"}), 400
 
-    partidas = db.collection("partidas") \
-        .where("jugador_id", "==", jugador) \
-        .stream()
+    partidas = db.collection("partidas")\
+        .where("jugador_id", "==", jugador_id).stream()
 
     resultado = []
-
     for p in partidas:
         data = p.to_dict()
         data["id"] = p.id
@@ -125,8 +121,5 @@ def obtener_partidas():
     return jsonify(resultado), 200
 
 
-# ======================
-# LOCALHOST (solo pruebas)
-# ======================
 if __name__ == "__main__":
     app.run(port=5000)
