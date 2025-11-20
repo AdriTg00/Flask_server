@@ -7,34 +7,87 @@ import os
 
 app = Flask(__name__)
 
-# ========================
-#  Inicializar Firebase
-# ========================
 
-# Leemos la clave directamente desde la variable de entorno
+# ======================================================
+#              🔥 INICIALIZAR FIREBASE 🔥
+# ======================================================
+
 firebase_key = os.getenv("FIREBASE_KEY")
 
 if not firebase_key:
     raise Exception("ERROR: No se encontró la variable de entorno FIREBASE_KEY")
 
-# Convertimos el texto del JSON a un diccionario
 cred_dict = json.loads(firebase_key)
-
-# Creamos las credenciales a partir del diccionario
 cred = credentials.Certificate(cred_dict)
-
-# Inicializamos Firebase
 firebase_admin.initialize_app(cred)
 
-# Cliente Firestore
 db = firestore.client()
 
-# ========================
-#       ENDPOINTS
-# ========================
 
-@app.route("/guardar_partida", methods=["POST"])
+# ======================================================
+#                 🟦   JUGADORES   🟦
+# ======================================================
+
+@app.route("/jugadores/validar", methods=["POST"])
+def validar_jugador():
+    """Devuelve {existe: True/False}"""
+    data = request.json
+    nombre = data.get("nombre")
+
+    if not nombre:
+        return jsonify({"error": "Nombre requerido"}), 400
+
+    doc = db.collection("jugadores").document(nombre).get()
+
+    return jsonify({"existe": doc.exists}), 200
+
+
+@app.route("/jugadores/crear", methods=["POST"])
+def crear_jugador():
+    """Crea un jugador si no existe."""
+    data = request.json
+    nombre = data.get("nombre")
+
+    if not nombre:
+        return jsonify({"error": "Nombre requerido"}), 400
+
+    doc_ref = db.collection("jugadores").document(nombre)
+    doc = doc_ref.get()
+
+    if doc.exists:
+        return jsonify({"creado": False, "error": "Jugador ya existe"}), 200
+
+    doc_ref.set({
+        "nombre": nombre,
+        "fecha_creacion": datetime.now(),
+    })
+
+    return jsonify({"creado": True}), 200
+
+
+@app.route("/jugadores/obtener", methods=["GET"])
+def obtener_jugador():
+    """Devuelve datos del jugador."""
+    nombre = request.args.get("nombre")
+
+    if not nombre:
+        return jsonify({"error": "Nombre requerido"}), 400
+
+    doc = db.collection("jugadores").document(nombre).get()
+
+    if not doc.exists:
+        return jsonify({"error": "No existe"}), 404
+
+    return jsonify(doc.to_dict()), 200
+
+
+# ======================================================
+#                 🟨   PARTIDAS   🟨
+# ======================================================
+
+@app.route("/partidas/guardar", methods=["POST"])
 def guardar_partida():
+    """Guarda una nueva partida."""
     data = request.json
 
     db.collection("partidas").add({
@@ -50,6 +103,30 @@ def guardar_partida():
     return jsonify({"status": "ok"}), 200
 
 
-# Render no usa esto, pero sirve para localhost
+@app.route("/partidas/obtener", methods=["GET"])
+def obtener_partidas():
+    """Devuelve todas las partidas de un jugador."""
+    jugador = request.args.get("jugador")
+
+    if not jugador:
+        return jsonify({"error": "Jugador requerido"}), 400
+
+    partidas = db.collection("partidas") \
+        .where("jugador_id", "==", jugador) \
+        .stream()
+
+    resultado = []
+
+    for p in partidas:
+        data = p.to_dict()
+        data["id"] = p.id
+        resultado.append(data)
+
+    return jsonify(resultado), 200
+
+
+# ======================
+# LOCALHOST (solo pruebas)
+# ======================
 if __name__ == "__main__":
     app.run(port=5000)
