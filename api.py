@@ -9,7 +9,7 @@ from uuid import uuid4
 app = Flask(__name__)
 
 # ======================================================
-#              🔥 INICIALIZAR FIREBASE 🔥
+#               INICIALIZAR FIREBASE 
 # ======================================================
 
 firebase_key = os.getenv("FIREBASE_KEY")
@@ -25,7 +25,7 @@ db = firestore.client()
 
 
 # ======================================================
-#                 🟦   JUGADORES   🟦
+#                    JUGADORES   
 # ======================================================
 
 @app.route("/jugadores/validar", methods=["POST"])
@@ -82,7 +82,7 @@ def obtener_jugador():
 
 
 # ======================================================
-#                 🟨   PARTIDAS   🟨
+#                   PARTIDAS   
 # ======================================================
 
 @app.route("/partidas/guardar", methods=["POST"])
