@@ -85,33 +85,27 @@ def obtener_jugador():
 #                   PARTIDAS   
 # ======================================================
 
-@app.route("/partidas/guardar", methods=["POST"])
-def guardar_partida():
-    data = request.json
-
-    jugador_id = data.get("jugador_id")
+@app.route("/partidas/obtener", methods=["GET"])
+def obtener_partidas():
+    jugador_id = request.args.get("jugador")
 
     if not jugador_id:
         return jsonify({"error": "Jugador requerido"}), 400
 
-    doc_ref = db.collection("jugadores") \
-        .document(jugador_id) \
-        .collection("partidas") \
-        .add({
-            "nivel": data.get("nivel"),
-            "tiempo": data.get("tiempo"),
-            "puntuacion": data.get("puntuacion"),
-            "muertes_nivel": data.get("muertes_nivel"),
-            "pos_x": data.get("pos_x"),
-            "pos_y": data.get("pos_y"),
-            "tipo": data.get("tipo"),
-            "fecha": datetime.now()
-        })
+    partidas_ref = db.collection("jugadores") \
+                     .document(jugador_id) \
+                     .collection("partidas") \
+                     .order_by("fecha", direction=firestore.Query.DESCENDING)
 
-    return jsonify({
-        "status": "ok",
-        "partida_id": doc_ref[1].id
-    }), 200
+    resultado = []
+    for doc in partidas_ref.stream():
+        data = doc.to_dict()
+        data["id"] = doc.id
+        resultado.append(data)
+
+    return jsonify(resultado), 200
+
+
 
 
 
