@@ -19,8 +19,19 @@ def guardar_partida(nombre):
     data = request.json
     data["fecha"] = datetime.now()
 
-    ref = db.collection("jugadores").document(nombre).collection("partidas").add(data)
-    return jsonify({"ok": True, "id": ref[1].id})
+    ref = (
+        db.collection("jugadores")
+        .document(nombre)
+        .collection("partidas")
+        .document()   # ← ID automático, pero controlado
+    )
+
+    ref.set(data)
+
+    return jsonify({
+        "ok": True,
+        "id": ref.id
+    })
 
 @partidas_api.delete("/jugadores/<nombre>/partidas/<id>")
 def borrar_partida(nombre, id):
