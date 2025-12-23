@@ -88,16 +88,19 @@ def obtener_jugador():
 @app.route("/partidas/guardar", methods=["POST"])
 def guardar_partida():
     data = request.json
-
+    
     db.collection("partidas").add({
         "jugador_id": data.get("jugador_id"),
         "nivel": data.get("nivel"),
         "tiempo": data.get("tiempo"),
         "puntuacion": data.get("puntuacion"),
         "muertes_nivel": data.get("muertes_nivel"),
+        "pos_x": data.get("pos_x"),
+        "pos_y": data.get("pos_y"),
         "tipo": data.get("tipo"),
         "fecha": datetime.now()
     })
+
 
     return jsonify({"status": "ok"}), 200
 
