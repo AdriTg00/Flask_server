@@ -85,6 +85,42 @@ def obtener_jugador():
 #                   PARTIDAS   
 # ======================================================
 
+@app.route("/partidas/guardar", methods=["POST"])
+def guardar_partida():
+    data = request.json
+    jugador_id = data.get("jugador_id")
+
+    if not jugador_id:
+        return jsonify({"error": "Jugador requerido"}), 400
+
+    ref = (
+        db.collection("jugadores")
+          .document(jugador_id)
+          .collection("partidas")
+          .document()   # 🔥 ID automático (slot)
+    )
+
+    ref.set({
+        "nivel": data.get("nivel"),
+        "tiempo": data.get("tiempo"),
+        "puntuacion": data.get("puntuacion"),
+        "muertes_nivel": data.get("muertes_nivel"),
+        "pos_x": data.get("pos_x"),
+        "pos_y": data.get("pos_y"),
+        "tipo": "guardado",
+        "fecha": datetime.now()
+    })
+
+    return jsonify({
+        "status": "ok",
+        "partida_id": ref.id
+    }), 200
+
+
+
+
+
+
 @app.route("/partidas/obtener", methods=["GET"])
 def obtener_partidas():
     jugador_id = request.args.get("jugador")
@@ -92,10 +128,12 @@ def obtener_partidas():
     if not jugador_id:
         return jsonify({"error": "Jugador requerido"}), 400
 
-    partidas_ref = db.collection("jugadores") \
-                     .document(jugador_id) \
-                     .collection("partidas") \
-                     .order_by("fecha", direction=firestore.Query.DESCENDING)
+    partidas_ref = (
+        db.collection("jugadores")
+          .document(jugador_id)
+          .collection("partidas")
+          .order_by("fecha", direction=firestore.Query.DESCENDING)
+    )
 
     resultado = []
     for doc in partidas_ref.stream():
@@ -104,29 +142,3 @@ def obtener_partidas():
         resultado.append(data)
 
     return jsonify(resultado), 200
-
-
-
-
-
-@app.route("/partidas/obtener", methods=["GET"])
-def obtener_partidas():
-    jugador_id = request.args.get("jugador")
-
-    if not jugador_id:
-        return jsonify({"error": "Jugador requerido"}), 400
-
-    partidas = db.collection("partidas")\
-        .where("jugador_id", "==", jugador_id).stream()
-
-    resultado = []
-    for p in partidas:
-        data = p.to_dict()
-        data["id"] = p.id
-        resultado.append(data)
-
-    return jsonify(resultado), 200
-
-
-if __name__ == "__main__":
-    app.run(port=5000)
