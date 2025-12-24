@@ -14,26 +14,24 @@ def obtener_partidas(nombre):
         partidas.append(data)
     return jsonify(partidas)
 
-@partidas_api.post("/jugadores/<nombre>/partidas")
-def guardar_partida(nombre):
+@partidas_api.post("/partidas/guardar")
+def guardar_partida():
     data = request.json
+
+    jugador_id = data.get("jugador_id")
+    if not jugador_id:
+        return jsonify({"error": "jugador_id requerido"}), 400
+
     data["fecha"] = datetime.now()
 
     ref = (
         db.collection("jugadores")
-        .document(nombre)
-        .collection("partidas")
-        .document()   # ← ID automático, pero controlado
+          .document(jugador_id)
+          .collection("partidas")
+          .add(data)
     )
-
-    ref.set(data)
 
     return jsonify({
         "ok": True,
-        "id": ref.id
+        "id": ref[1].id
     })
-
-@partidas_api.delete("/jugadores/<nombre>/partidas/<id>")
-def borrar_partida(nombre, id):
-    db.collection("jugadores").document(nombre).collection("partidas").document(id).delete()
-    return jsonify({"ok": True})
