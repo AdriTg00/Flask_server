@@ -4,15 +4,22 @@ from datetime import datetime
 
 partidas_api = Blueprint("partidas_api", __name__)
 
-@partidas_api.get("/jugadores/<nombre>/partidas")
-def obtener_partidas(nombre):
+@partidas_api.get("/partidas/<jugador_id>")
+def obtener_partidas(jugador_id):
+    docs = (
+        db.collection("partidas")
+        .where("jugador_id", "==", jugador_id)
+        .stream()
+    )
+
     partidas = []
-    docs = db.collection("jugadores").document(nombre).collection("partidas").stream()
     for doc in docs:
         data = doc.to_dict()
         data["id"] = doc.id
         partidas.append(data)
+
     return jsonify(partidas)
+
 
 @partidas_api.post("/partidas/guardar")
 def guardar_partida():
