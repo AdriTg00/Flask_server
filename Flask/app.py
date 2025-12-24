@@ -5,9 +5,8 @@ from .partida_api import partidas_api
 app = Flask(__name__)
 
 # Registrar rutas
-app.register_blueprint(jugador_api, url_prefix="/api")
-app.register_blueprint(partidas_api, url_prefix="/api")
-
+app.register_blueprint(jugador_api)
+app.register_blueprint(partidas_api)
 
 @app.get("/")
 def home():
