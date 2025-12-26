@@ -18,3 +18,20 @@ def crear_jugador():
 
     db.collection("jugadores").document(nombre).set({"creado": True})
     return jsonify({"ok": True})
+
+@jugador_api.post("/jugadores/estadisticas")
+def actualizar_estadisticas():
+    data = request.json
+
+    jugador_id = data["jugador_id"]
+
+    ref = db.collection("jugadores").document(jugador_id)
+
+    ref.update({
+        "tiempo_total": data["tiempo_total"],
+        "puntuacion_total": data["puntuacion_total"],
+        "niveles_superados": data["niveles_superados"]
+    })
+
+    return jsonify({"ok": True})
+
