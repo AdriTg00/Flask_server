@@ -7,8 +7,9 @@ partidas_api = Blueprint("partidas_api", __name__)
 @partidas_api.get("/partidas/<jugador_id>")
 def obtener_partidas(jugador_id):
     docs = (
-        db.collection("partidas")
-        .where("jugador_id", "==", jugador_id)
+        db.collection("jugadores")
+        .document(jugador_id)
+        .collection("partidas")
         .stream()
     )
 
@@ -19,6 +20,7 @@ def obtener_partidas(jugador_id):
         partidas.append(data)
 
     return jsonify(partidas)
+
 
 
 @partidas_api.post("/partidas/guardar")
