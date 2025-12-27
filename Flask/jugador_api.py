@@ -23,15 +23,18 @@ def crear_jugador():
 def actualizar_estadisticas():
     data = request.json
 
-    jugador_id = data["jugador_id"]
+    jugador_id = data.get("jugador_id")
+    if not jugador_id:
+        return jsonify({"error": "jugador_id requerido"}), 400
 
     ref = db.collection("jugadores").document(jugador_id)
 
-    ref.update({
-        "tiempo_total": data["tiempo_total"],
-        "puntuacion_total": data["puntuacion_total"],
-        "niveles_superados": data["niveles_superados"]
-    })
+    ref.set({
+        "tiempo_total": data.get("tiempo_total", 0),
+        "puntuacion_total": data.get("puntuacion_total", 0),
+        "niveles_superados": data.get("niveles_superados", 0),
+    }, merge=True)
 
     return jsonify({"ok": True})
+
 
