@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from firebase_init import db
+from datetime import datetime
 
 jugador_api = Blueprint("jugador_api", __name__)
 
