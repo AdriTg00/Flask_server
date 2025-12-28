@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 from firebase_admin import firestore
 
-from .firebase_init import db
+from .firebase_init import db  # 🔑 IMPORT RELATIVO
 
 partidas_api = Blueprint("partidas_api", __name__)
 
@@ -12,7 +12,7 @@ def guardar_partida():
     jugador_id = data.get("jugador_id")
 
     if not jugador_id:
-        return jsonify({"error": "Jugador requerido"}), 400
+        return jsonify({"error": "jugador_id requerido"}), 400
 
     ref = (
         db.collection("jugadores")
@@ -37,7 +37,7 @@ def obtener_partidas():
     jugador_id = request.args.get("jugador")
 
     if not jugador_id:
-        return jsonify({"error": "Jugador requerido"}), 400
+        return jsonify({"error": "jugador requerido"}), 400
 
     partidas_ref = (
         db.collection("jugadores")

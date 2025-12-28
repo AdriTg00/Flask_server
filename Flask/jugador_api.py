@@ -1,13 +1,11 @@
 from flask import Blueprint, request, jsonify
-from firebase_init import db
 from datetime import datetime
 from uuid import uuid4
 
+from .firebase_init import db  # 🔑 IMPORT RELATIVO
+
 jugador_api = Blueprint("jugador_api", __name__)
 
-# ===============================
-# VALIDAR JUGADOR
-# ===============================
 @jugador_api.post("/jugadores/validar")
 def validar_jugador():
     data = request.json
@@ -22,9 +20,6 @@ def validar_jugador():
     return jsonify({"existe": existe}), 200
 
 
-# ===============================
-# CREAR JUGADOR
-# ===============================
 @jugador_api.post("/jugadores/crear")
 def crear_jugador():
     data = request.json
@@ -49,9 +44,6 @@ def crear_jugador():
     }), 200
 
 
-# ===============================
-# ACTUALIZAR ESTADÍSTICAS
-# ===============================
 @jugador_api.post("/jugadores/estadisticas")
 def actualizar_estadisticas():
     data = request.json
@@ -61,13 +53,6 @@ def actualizar_estadisticas():
         return jsonify({"error": "jugador_id requerido"}), 400
 
     ref = db.collection("jugadores").document(jugador_id)
-    doc = ref.get()
-
-    if not doc.exists:
-        return jsonify({
-            "error": "Jugador no existe",
-            "jugador_id": jugador_id
-        }), 404
 
     ref.set({
         "tiempo_total": float(data.get("tiempo_total", 0)),
