@@ -9,27 +9,34 @@ partidas_api = Blueprint("partidas_api", __name__)
 @partidas_api.post("/partidas/guardar")
 def guardar_partida():
     data = request.json
-    jugador_id = data.get("jugador_id")
 
+    jugador_id = data.get("jugador_id")
     if not jugador_id:
         return jsonify({"error": "jugador_id requerido"}), 400
+
+    data["fecha"] = datetime.now()
+
+    partida = {
+        "nivel": data.get("nivel", 1),
+        "tiempo": data.get("tiempo", 0),
+        "puntuacion": data.get("puntuacion", 0),
+        "muertes_nivel": data.get("muertes_nivel", 0),
+        "pos_x": data.get("pos_x", 0),
+        "pos_y": data.get("pos_y", 0),
+        "fecha": data["fecha"]
+    }
 
     ref = (
         db.collection("jugadores")
         .document(jugador_id)
         .collection("partidas")
-        .document()
+        .add(partida)
     )
 
-    ref.set({
-        "nivel": data.get("nivel"),
-        "tiempo": data.get("tiempo"),
-        "puntuacion": data.get("puntuacion"),
-        "muertes_nivel": data.get("muertes_nivel"),
-        "fecha": datetime.now()
+    return jsonify({
+        "ok": True,
+        "id": ref[1].id
     })
-
-    return jsonify({"ok": True, "id": ref.id}), 200
 
 
 @partidas_api.get("/partidas/obtener")
