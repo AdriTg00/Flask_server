@@ -1,6 +1,7 @@
 from flask import Flask
-from jugador_api import jugador_api
-from partida_api import partidas_api
+
+from .jugador_api import jugador_api
+from .partida_api import partidas_api
 
 app = Flask(__name__)
 

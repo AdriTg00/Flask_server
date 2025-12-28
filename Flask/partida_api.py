@@ -1,13 +1,11 @@
 from flask import Blueprint, request, jsonify
-from firebase_init import db
 from datetime import datetime
 from firebase_admin import firestore
 
+from .firebase_init import db
+
 partidas_api = Blueprint("partidas_api", __name__)
 
-# ===============================
-# GUARDAR PARTIDA
-# ===============================
 @partidas_api.post("/partidas/guardar")
 def guardar_partida():
     data = request.json
@@ -18,9 +16,9 @@ def guardar_partida():
 
     ref = (
         db.collection("jugadores")
-          .document(jugador_id)
-          .collection("partidas")
-          .document()
+        .document(jugador_id)
+        .collection("partidas")
+        .document()
     )
 
     ref.set({
@@ -28,21 +26,12 @@ def guardar_partida():
         "tiempo": data.get("tiempo"),
         "puntuacion": data.get("puntuacion"),
         "muertes_nivel": data.get("muertes_nivel"),
-        "pos_x": data.get("pos_x"),
-        "pos_y": data.get("pos_y"),
-        "tipo": "guardado",
         "fecha": datetime.now()
     })
 
-    return jsonify({
-        "ok": True,
-        "partida_id": ref.id
-    }), 200
+    return jsonify({"ok": True, "id": ref.id}), 200
 
 
-# ===============================
-# OBTENER PARTIDAS
-# ===============================
 @partidas_api.get("/partidas/obtener")
 def obtener_partidas():
     jugador_id = request.args.get("jugador")
@@ -52,9 +41,9 @@ def obtener_partidas():
 
     partidas_ref = (
         db.collection("jugadores")
-          .document(jugador_id)
-          .collection("partidas")
-          .order_by("fecha", direction=firestore.Query.DESCENDING)
+        .document(jugador_id)
+        .collection("partidas")
+        .order_by("fecha", direction=firestore.Query.DESCENDING)
     )
 
     resultado = []
