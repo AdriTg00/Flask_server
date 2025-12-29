@@ -62,3 +62,21 @@ def actualizar_estadisticas():
     }, merge=True)
 
     return jsonify({"ok": True}), 200
+
+
+@jugador_api.get("/jugadores/<jugador_id>")
+def obtener_estadisticas_jugador(jugador_id):
+    ref = db.collection("jugadores").document(jugador_id)
+    doc = ref.get()
+
+    if not doc.exists:
+        return jsonify({}), 404
+
+    data = doc.to_dict()
+
+    # Convertimos fechas a string para JSON
+    for campo in ["fecha_creacion", "ultima_actualizacion"]:
+        if campo in data and data[campo]:
+            data[campo] = data[campo].isoformat()
+
+    return jsonify(data), 200
